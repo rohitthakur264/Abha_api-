@@ -1,0 +1,745 @@
+{
+  "info": {
+    "name": "ProDoc ABDM APIs (Manual Testing)",
+    "_postman_id": "prodoc-abdm-manual-collection",
+    "description": "Manual step-by-step testing collection for ProDoc ABDM APIs (APIs 1 to 8). No background test scripts. Hit each API one by one, inspect the response, copy the returned ID, paste into the next API, and validate.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Setup: Bridge & Session",
+      "item": [
+        {
+          "name": "Inspect Global Session Token (Req 1)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/session/token",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "session",
+                "token"
+              ]
+            },
+            "description": "Senior Req 1: Inspects the active GLOBAL_ACCESS_TOKEN and its remaining validity. Automatically generates a fresh token if expired."
+          }
+        },
+        {
+          "name": "Open Webhook Channel (Req 3)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/webhook/open",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "webhook",
+                "open"
+              ]
+            },
+            "description": "Senior Req 3: Opens the webhook listener, registers callback URL with ABDM gateway, and attaches the callback handler."
+          }
+        },
+        {
+          "name": "Simulate Webhook Push Callback (Req 3)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": {\n    \"requestId\": \"req-demo-001\"\n  },\n  \"status\": \"SUCCESS\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/webhook/callback",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "webhook",
+                "callback"
+              ]
+            },
+            "description": "Senior Req 3: Tests direct incoming push callback. Fires on_message_received() and immediately acknowledges: 'I have received this message'."
+          }
+        },
+        {
+          "name": "Register Bridge URL to ABDM",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/register-bridge",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "register-bridge"
+              ]
+            },
+            "description": "Registers webhook URL with ABDM gateway and returns the exact 'bridge_url' in the JSON response."
+          }
+        },
+        {
+          "name": "Get Configured Bridge URL",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8000/bridge-url",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "bridge-url"
+              ]
+            },
+            "description": "Returns current bridge webhook URL for easy copying."
+          }
+        }
+      ]
+    },
+    {
+      "name": "M1: ProDoc ABHA Integration (Calls 3 to 7 - ALL POST)",
+      "item": [
+        {
+          "name": "Call 3 - Search Existing ABHA (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"P10025\",\n  \"searchType\": \"MOBILE\",\n  \"searchValue\": \"8779441274\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/abha/search",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "abha",
+                "search"
+              ]
+            },
+            "description": "Searches for an existing ABHA using mobile number (encrypted by Python)."
+          }
+        },
+        {
+          "name": "Call 4 - Link Existing ABHA to ProDoc Patient (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"P10025\",\n  \"abhaNumber\": \"91372762677683\",\n  \"abhaAddress\": \"thakurrohan2@sbx\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/abha/link-existing",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "abha",
+                "link-existing"
+              ]
+            },
+            "description": "Links a verified existing ABHA identity to the ProDoc patient record."
+          }
+        },
+        {
+          "name": "Call 5 - Get Patient ABHA Profile (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"P10025\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/patients/abha-profile",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "patients",
+                "abha-profile"
+              ]
+            },
+            "description": "Returns the ABHA profile mapped to the ProDoc patient via POST."
+          }
+        },
+        {
+          "name": "Call 6 - Get ABHA Card (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"P10025\",\n  \"format\": \"PDF\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/patients/abha-card",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "patients",
+                "abha-card"
+              ]
+            },
+            "description": "Fetches the patient's ABHA card Base64 PDF content via POST."
+          }
+        },
+        {
+          "name": "Call 7 - Get ABHA QR Code (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"P10025\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/patients/abha-qr",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "patients",
+                "abha-qr"
+              ]
+            },
+            "description": "Returns the QR Base64 representation associated with patient ABHA identity via POST."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Flow 1: New ABHA Enrolment (APIs 1 -> 2 -> 5 -> 6 -> 7)",
+      "item": [
+        {
+          "name": "Step 1 - API 1: Register Patient (Aadhaar OTP Request)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"P10025\",\n  \"name\": \"Rahul Sharma\",\n  \"dob\": \"1998-05-15\",\n  \"gender\": \"M\",\n  \"mobile\": \"9999999999\",\n  \"aadhaarNumber\": \"123456789012\",\n  \"consent\": true\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/patients/register",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "patients",
+                "register"
+              ]
+            },
+            "description": "Step 1: Hit Send. Check response for 'transactionId' and 'status': 'OTP_PENDING'. Copy the transactionId for Step 2."
+          }
+        },
+        {
+          "name": "Step 2 - API 2: Verify Enrolment OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"P10025\",\n  \"transactionId\": \"PASTE_TRANSACTION_ID_FROM_API_1\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/patients/verify-otp",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "patients",
+                "verify-otp"
+              ]
+            },
+            "description": "Step 2: Paste the transactionId from API 1 and enter patient OTP. Check response for 'status': 'ABHA_CREATED', masked 'abhaNumber', and 'abhaAddress'."
+          }
+        },
+        {
+          "name": "Step 3 - API 5: Get Patient ABHA Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"P10025\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/patients/abha-profile",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "patients",
+                "abha-profile"
+              ]
+            },
+            "description": "Step 3: Hit Send. Python uses the stored ABHA X-token from Step 2 and returns the normalized patient profile."
+          }
+        },
+        {
+          "name": "Step 4 - API 6: Get ABHA Card",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"P10025\",\n  \"format\": \"PDF\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/patients/abha-card",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "patients",
+                "abha-card"
+              ]
+            },
+            "description": "Step 4: Hit Send. Returns the patient ABHA Card as PDF file download."
+          }
+        },
+        {
+          "name": "Step 5 - API 7: Get ABHA QR Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"P10025\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/patients/abha-qr",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "patients",
+                "abha-qr"
+              ]
+            },
+            "description": "Step 5: Hit Send. Returns the patient ABHA QR Code image data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Flow 2: Existing ABHA Search & Link (APIs 3 -> 4)",
+      "item": [
+        {
+          "name": "Step 1 - API 3 (SEARCH): Find ABHA by Mobile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"SEARCH\",\n  \"patientId\": \"P10025\",\n  \"searchType\": \"MOBILE\",\n  \"searchValue\": \"9999999999\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/abha/search",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "abha",
+                "search"
+              ]
+            },
+            "description": "Step 1: Hit Send. Inspect candidate accounts in 'matches' and copy the 'searchTxnId' for Step 2."
+          }
+        },
+        {
+          "name": "Step 2 - API 3 (REQUEST_OTP): Send Login OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"REQUEST_OTP\",\n  \"patientId\": \"P10025\",\n  \"searchTxnId\": \"PASTE_SEARCH_TXN_ID_FROM_STAGE_1\",\n  \"selectedIndex\": 1,\n  \"verificationMode\": \"mobile\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/abha/search",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "abha",
+                "search"
+              ]
+            },
+            "description": "Step 2: Paste the searchTxnId from Stage 1, select candidate index (1). Hit Send and copy the returned 'otpTxnId' for Step 3."
+          }
+        },
+        {
+          "name": "Step 3 - API 3 (VERIFY_OTP): Verify Login OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"VERIFY_OTP\",\n  \"patientId\": \"P10025\",\n  \"otpTxnId\": \"PASTE_OTP_TXN_ID_FROM_STAGE_2\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/abha/search",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "abha",
+                "search"
+              ]
+            },
+            "description": "Step 3: Paste the otpTxnId from Stage 2 and patient OTP. Hit Send. Verify 'status': 'VERIFIED' and copy 'verificationId' for API 4."
+          }
+        },
+        {
+          "name": "Step 4 - API 4: Link Verified ABHA to Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"P10025\",\n  \"verificationId\": \"PASTE_VERIFICATION_ID_FROM_STAGE_3\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/abha/link-existing",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "abha",
+                "link-existing"
+              ]
+            },
+            "description": "Step 4: Paste verificationId. Hit Send. Local link is verified and stored, returning status 'LINKED'."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Flow 3: Care Context Linking (API 8)",
+      "item": [
+        {
+          "name": "API 8: Register Care Context",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"P10025\",\n  \"abhaAddress\": \"thakurrohan2@sbx\",\n  \"patientReferenceNumber\": \"PRODOC-P10025\",\n  \"careContexts\": [\n    {\n      \"referenceNumber\": \"OPD-2026-00125\",\n      \"display\": \"OPD Consultation - 2026-11-04\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/hip/care-context/register",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "hip",
+                "care-context",
+                "register"
+              ]
+            },
+            "description": "API 8: Single call that resolves token, sends link/carecontext to ABDM, and returns ABDM webhook completion response."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Flow 4: ProDoc OPD - Register ABHA to Existing Patient (frmRegisterABHAPatient)",
+      "description": "Direct integration for ProDoc frmRegisterABHAPatient.aspx / clsABHA.vb to request OTP, verify OTP and map ABHA to an existing patient.",
+      "item": [
+        {
+          "name": "Step 1 - Send OTP (btnSendOTP)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.transactionId) {",
+                  "    pm.environment.set(\"abha_otp_txn_id\", res.transactionId);",
+                  "    pm.collectionVariables.set(\"abha_otp_txn_id\", res.transactionId);",
+                  "    console.log(\"Saved abha_otp_txn_id:\", res.transactionId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobile\": \"9999999999\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/register-patient/send-otp",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "register-patient",
+                "send-otp"
+              ]
+            },
+            "description": "Called by ProDoc btnSendOTP. Encrypts mobile and requests ABDM Login OTP."
+          }
+        },
+        {
+          "name": "Step 2 - Verify OTP (btnVerifyOTP)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.abhaNumber) {",
+                  "    pm.environment.set(\"verified_abha_number\", res.abhaNumber);",
+                  "    pm.environment.set(\"verified_abha_address\", res.abhaAddress);",
+                  "    console.log(\"Verified ABHA:\", res.abhaNumber, res.abhaAddress);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobile\": \"9999999999\",\n  \"transactionId\": \"{{abha_otp_txn_id}}\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/register-patient/verify-otp",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "register-patient",
+                "verify-otp"
+              ]
+            },
+            "description": "Called by ProDoc btnVerifyOTP. Encrypts OTP, calls ABDM Verify, and returns ABHA details."
+          }
+        },
+        {
+          "name": "Step 3 - Register ABHA Link (btnRegisterABHA)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"regNo\": \"946\",\n  \"abhaNumber\": \"{{verified_abha_number}}\",\n  \"abhaAddress\": \"{{verified_abha_address}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/register-patient/link",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "register-patient",
+                "link"
+              ]
+            },
+            "description": "Called by ProDoc btnRegisterABHA. Links verified ABHA to patient Reg. No."
+          }
+        }
+      ]
+    }
+  ]
+}

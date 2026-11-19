@@ -1,0 +1,100 @@
+{
+  "3a6ac7ab-e9dc-42d4-b690-15c61dfbd978": {
+    "patientId": "P10025",
+    "searchTxnId": "3a6ac7ab-e9dc-42d4-b690-15c61dfbd978",
+    "accounts": [
+      {
+        "index": 1,
+        "ABHANumber": "xx-xxxx-xxxx-7683",
+        "name": "Rohan Kumar Thakur",
+        "gender": "M",
+        "kycVerified": "true",
+        "authMethods": [
+          "DEMOGRAPHICS",
+          "AADHAAR_OTP",
+          "MOBILE_OTP",
+          "AADHAAR_BIO"
+        ]
+      },
+      {
+        "index": 2,
+        "ABHANumber": "xx-xxxx-xxxx-7132",
+        "name": "Rohit Rajiv Thakur",
+        "gender": "M",
+        "kycVerified": "true",
+        "authMethods": [
+          "DEMOGRAPHICS",
+          "AADHAAR_OTP",
+          "MOBILE_OTP",
+          "AADHAAR_BIO"
+        ]
+      }
+    ],
+    "matches": [
+      {
+        "abhaNumber": "xx-xxxx-xxxx-7683",
+        "verificationRequired": true,
+        "index": 1,
+        "name": "Rohan Kumar Thakur",
+        "gender": "M"
+      },
+      {
+        "abhaNumber": "xx-xxxx-xxxx-7132",
+        "verificationRequired": true,
+        "index": 2,
+        "name": "Rohit Rajiv Thakur",
+        "gender": "M"
+      }
+    ],
+    "created_at": "2026-11-19T08:05:15.155Z"
+  },
+  "P10025": {
+    "patientId": "P10025",
+    "searchTxnId": "3a6ac7ab-e9dc-42d4-b690-15c61dfbd978",
+    "accounts": [
+      {
+        "index": 1,
+        "ABHANumber": "xx-xxxx-xxxx-7683",
+        "name": "Rohan Kumar Thakur",
+        "gender": "M",
+        "kycVerified": "true",
+        "authMethods": [
+          "DEMOGRAPHICS",
+          "AADHAAR_OTP",
+          "MOBILE_OTP",
+          "AADHAAR_BIO"
+        ]
+      },
+      {
+        "index": 2,
+        "ABHANumber": "xx-xxxx-xxxx-7132",
+        "name": "Rohit Rajiv Thakur",
+        "gender": "M",
+        "kycVerified": "true",
+        "authMethods": [
+          "DEMOGRAPHICS",
+          "AADHAAR_OTP",
+          "MOBILE_OTP",
+          "AADHAAR_BIO"
+        ]
+      }
+    ],
+    "matches": [
+      {
+        "abhaNumber": "xx-xxxx-xxxx-7683",
+        "verificationRequired": true,
+        "index": 1,
+        "name": "Rohan Kumar Thakur",
+        "gender": "M"
+      },
+      {
+        "abhaNumber": "xx-xxxx-xxxx-7132",
+        "verificationRequired": true,
+        "index": 2,
+        "name": "Rohit Rajiv Thakur",
+        "gender": "M"
+      }
+    ],
+    "created_at": "2026-11-19T08:05:15.155Z"
+  }
+}
