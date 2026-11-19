@@ -180,7 +180,7 @@ async def enrol_verify_otp(data: dict) -> dict:
     if yob and mob and day_ob:
         dob = f"{yob}-{str(mob).zfill(2)}-{str(day_ob).zfill(2)}"
     else:
-        dob = str(profile.get("dob") or profile.get("dateOfBirth") or yob or "1998-05-15").strip()
+        dob = str(profile.get("dob") or profile.get("dateOfBirth") or yob or "").strip()
     profile["dob"] = dob
 
     # Securely store tokens and profile (never return tokens in response or logs)
@@ -663,7 +663,7 @@ async def get_patient_profile(patient_id: str) -> dict:
                 dob = (
                     f"{profile.get('yearOfBirth')}-{str(profile.get('monthOfBirth', '')).zfill(2)}-{str(profile.get('dayOfBirth', '')).zfill(2)}"
                     if profile.get("yearOfBirth") and profile.get("monthOfBirth") and profile.get("dayOfBirth")
-                    else str(profile.get("dob") or profile.get("dateOfBirth") or profile.get("yearOfBirth") or "1998-05-15").strip()
+                    else str(profile.get("dob") or profile.get("dateOfBirth") or profile.get("yearOfBirth") or "").strip()
                 )
 
                 return {
@@ -672,8 +672,8 @@ async def get_patient_profile(patient_id: str) -> dict:
                     "abhaProfile": {
                         "abhaNumber": raw_num,
                         "abhaAddress": raw_addr,
-                        "name": profile.get("name") or "Rohan Kumar Thakur",
-                        "gender": profile.get("gender") or "M",
+                        "name": profile.get("name") or "",
+                        "gender": profile.get("gender") or "",
                         "dob": dob,
                     },
                     "message": "ABHA profile retrieved successfully",
@@ -705,8 +705,8 @@ async def get_patient_profile(patient_id: str) -> dict:
             or search_match.get("abhaAddress")
             or ""
         )
-        name = p.get("name") or (enrol.get("name") if enrol else None) or search_match.get("name") or "Rohan Kumar Thakur"
-        gender = p.get("gender") or (enrol.get("gender") if enrol else None) or search_match.get("gender") or "M"
+        name = p.get("name") or (enrol.get("name") if enrol else None) or search_match.get("name") or ""
+        gender = p.get("gender") or (enrol.get("gender") if enrol else None) or search_match.get("gender") or ""
 
         # Resolve DOB reliably from all available sources
         dob = ""
@@ -724,8 +724,6 @@ async def get_patient_profile(patient_id: str) -> dict:
             dob = str(enrol["dob"]).strip()
         if not dob and search_match and search_match.get("dob"):
             dob = str(search_match["dob"]).strip()
-        if not dob:
-            dob = "1998-05-15"
 
         return {
             "success": True,
