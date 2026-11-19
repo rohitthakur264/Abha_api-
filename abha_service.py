@@ -26,6 +26,8 @@ from store import (
     save_m1_linked,
     save_m1_profile,
     save_m1_search,
+    get_m1_linked,
+    get_m1_profile,
 )
 
 log = logging.getLogger("abdm-m1-service")
@@ -682,8 +684,8 @@ async def get_patient_profile(patient_id: str) -> dict:
             log.warning("[API 5] Live profile fetch failed, falling back to local: %s", exc)
 
     # Local store fallback (linked patients, cached profiles, or prior search)
-    linked = m1_linked_patients.get(patient_id)
-    cached = m1_patient_profiles.get(patient_id)
+    linked = get_m1_linked(patient_id)
+    cached = get_m1_profile(patient_id)
     enrol = m1_enrolments.get(patient_id)
     search_meta = m1_searches.get(patient_id, {})
 

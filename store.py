@@ -235,6 +235,20 @@ def save_m1_search(key: str, data: dict) -> None:
     except Exception as e:
         log.warning("Could not persist M1 search: %s", e)
 
+def get_m1_linked(patient_id: str) -> dict:
+    disk = _load_m1_linked()
+    if patient_id in disk:
+        m1_linked_patients[patient_id] = disk[patient_id]
+        return disk[patient_id]
+    return m1_linked_patients.get(patient_id, {})
+
+def get_m1_profile(patient_id: str) -> dict:
+    disk = _load_m1_profiles()
+    if patient_id in disk:
+        m1_patient_profiles[patient_id] = disk[patient_id]
+        return disk[patient_id]
+    return m1_patient_profiles.get(patient_id, {})
+
 # Memory & State (M1 - ABHA APIs 1-7)
 m1_patient_tokens: dict[str, dict] = _load_m1_cache()
 m1_enrolments: dict[str, dict] = {}       # patientId -> {txnId, mobile, name, dob, gender}

@@ -2,6 +2,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 
+# Application entrypoint
 from fastapi import FastAPI
 
 import config
