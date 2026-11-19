@@ -2,7 +2,7 @@
 import uuid
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 import abha_service
 import config
@@ -110,15 +110,26 @@ class LinkExistingAbhaRequest(BaseModel):
 
 
 class ProDocSendOtpRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
     mobile: str | None = None
     mobileNo: str | None = None
+    abhaAddress: str | None = None
+    ABHAAddress: str | None = None
+    abhaNumber: str | None = None
+    ABHANumber: str | None = None
+    searchValue: str | None = None
     patientId: str | None = None
     regNo: str | None = None
 
 
 class ProDocVerifyOtpRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
     mobile: str | None = None
     mobileNo: str | None = None
+    abhaAddress: str | None = None
+    ABHAAddress: str | None = None
+    abhaNumber: str | None = None
+    ABHANumber: str | None = None
     transactionId: str | None = None
     txnId: str | None = None
     otp: str | None = None
@@ -127,6 +138,7 @@ class ProDocVerifyOtpRequest(BaseModel):
 
 
 class ProDocRegisterAbhaRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
     patientId: str | None = None
     regNo: str | None = None
     abhaNumber: str | None = None

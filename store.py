@@ -249,6 +249,15 @@ def get_m1_profile(patient_id: str) -> dict:
         return disk[patient_id]
     return m1_patient_profiles.get(patient_id, {})
 
+def load_all_m1_linked() -> dict[str, dict]:
+    return _load_m1_linked()
+
+def load_all_m1_profiles() -> dict[str, dict]:
+    return _load_m1_profiles()
+
+def load_all_m1_searches() -> dict[str, dict]:
+    return _load_m1_searches()
+
 # Memory & State (M1 - ABHA APIs 1-7)
 m1_patient_tokens: dict[str, dict] = _load_m1_cache()
 m1_enrolments: dict[str, dict] = {}       # patientId -> {txnId, mobile, name, dob, gender}

@@ -615,7 +615,7 @@
       "description": "Direct integration for ProDoc frmRegisterABHAPatient.aspx / clsABHA.vb to request OTP, verify OTP and map ABHA to an existing patient.",
       "item": [
         {
-          "name": "Step 1 - Send OTP (btnSendOTP)",
+          "name": "1. Send OTP (btnSendOTP) - by ABHA Address or Mobile",
           "event": [
             {
               "listen": "test",
@@ -642,7 +642,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"mobile\": \"9999999999\"\n}"
+              "raw": "{\n  \"abhaAddress\": \"thakurrohan2@sbx\",\n  \"patientId\": \"1\"\n}"
             },
             "url": {
               "raw": "http://localhost:8000/api/abdm/register-patient/send-otp",
@@ -658,11 +658,11 @@
                 "send-otp"
               ]
             },
-            "description": "Called by ProDoc btnSendOTP. Encrypts mobile and requests ABDM Login OTP."
+            "description": "Hits ABDM POST /profile/login/request/otp. Accepts abhaAddress (e.g. thakurrohan2@sbx) or mobile (e.g. 8779441274). Python encrypts with ABDM public key and returns transactionId."
           }
         },
         {
-          "name": "Step 2 - Verify OTP (btnVerifyOTP)",
+          "name": "2. Verify OTP (btnVerifyOTP) - Returns Profile with Real Card DOB",
           "event": [
             {
               "listen": "test",
@@ -689,7 +689,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"mobile\": \"9999999999\",\n  \"transactionId\": \"{{abha_otp_txn_id}}\",\n  \"otp\": \"123456\"\n}"
+              "raw": "{\n  \"abhaAddress\": \"thakurrohan2@sbx\",\n  \"otp\": \"001689\",\n  \"patientId\": \"1\"\n}"
             },
             "url": {
               "raw": "http://localhost:8000/api/abdm/register-patient/verify-otp",
@@ -705,11 +705,11 @@
                 "verify-otp"
               ]
             },
-            "description": "Called by ProDoc btnVerifyOTP. Encrypts OTP, calls ABDM Verify, and returns ABHA details."
+            "description": "Hits ABDM POST /profile/login/verify. Python auto-maps transactionId, encrypts OTP, verifies with ABDM, fetches live profile, extracts actual ABHA card DOB, and returns full profile."
           }
         },
         {
-          "name": "Step 3 - Register ABHA Link (btnRegisterABHA)",
+          "name": "3. Register ABHA Link (btnRegisterABHA)",
           "request": {
             "method": "POST",
             "header": [
@@ -720,7 +720,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"regNo\": \"946\",\n  \"abhaNumber\": \"{{verified_abha_number}}\",\n  \"abhaAddress\": \"{{verified_abha_address}}\"\n}"
+              "raw": "{\n  \"patientId\": \"1\",\n  \"abhaNumber\": \"91372762677683\",\n  \"abhaAddress\": \"thakurrohan2@sbx\"\n}"
             },
             "url": {
               "raw": "http://localhost:8000/api/abdm/register-patient/link",
@@ -736,7 +736,7 @@
                 "link"
               ]
             },
-            "description": "Called by ProDoc btnRegisterABHA. Links verified ABHA to patient Reg. No."
+            "description": "Links verified ABHA account with patientId / regNo in hospital database and persists to disk cache."
           }
         }
       ]
