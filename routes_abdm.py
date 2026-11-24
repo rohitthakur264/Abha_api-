@@ -16,6 +16,7 @@ from abdm_client import (
 )
 from store import (
     care_context_transactions,
+    get_m1_linked,
     get_token_expiry_info,
     is_link_token_valid,
     link_tokens,
@@ -472,6 +473,45 @@ async def get_care_context_status(identifier: str):
         "identifier": identifier,
         "status": "SUCCESS",
         "message": "Care context linking completed",
+    }
+
+
+# ==============================================================================
+# ProDoc API 10: List Patient Care Contexts (M2)
+# ==============================================================================
+
+@router.get("/api/abdm/patients/{patientId}/care-contexts", tags=["ProDoc API 10"])
+async def list_patient_care_contexts(patientId: str):
+    """
+    ProDoc API 10: List Patient Care Contexts (M2).
+    Returns care contexts linked to the patient record.
+    """
+    contexts = []
+    # Check care context transactions for this patientId
+    for txn_id, rec in care_context_transactions.items():
+        if isinstance(rec, dict) and rec.get("patientId") == patientId:
+            status = rec.get("status", "LINKED")
+            ccs = rec.get("linkedCareContexts") or []
+            for cc in ccs:
+                contexts.append({
+                    "referenceNumber": cc if isinstance(cc, str) else cc.get("referenceNumber", "OPD-001"),
+                    "display": f"Consultation encounter ({cc})",
+                    "status": status,
+                })
+
+    # If no contexts created yet, return linked patient confirmation
+    linked = get_m1_linked(patientId) or {}
+    if not contexts:
+        contexts.append({
+            "referenceNumber": f"OPD-{patientId}-001",
+            "display": f"OPD Consultation - Patient {patientId}",
+            "status": "LINKED" if linked else "UNLINKED",
+        })
+
+    return {
+        "success": True,
+        "patientId": patientId,
+        "careContexts": contexts,
     }
 
 
