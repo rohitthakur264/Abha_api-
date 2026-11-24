@@ -740,18 +740,19 @@
           }
         },
         {
-          "name": "4. Get Profile Detail (Name Breakdown: First, Middle, Last)",
+          "name": "4. Get Profile Detail (GET ABDM Profile - No Body Needed)",
           "request": {
-            "method": "POST",
+            "method": "GET",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json"
+                "key": "X-token",
+                "value": "Bearer {{user_token}}",
+                "type": "text",
+                "description": "X-token received from verify-user response (auto-mapped if omitted)"
               }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n  \"patientId\": \"1\",\n  \"enteredData\": {\n    \"firstName\": \"Rahul\",\n    \"middleName\": \"Arun\",\n    \"lastName\": \"Kumar\"\n  }\n}"
+              "mode": "none"
             },
             "url": {
               "raw": "http://localhost:8000/api/abdm/register-patient/profile-details",
@@ -767,7 +768,7 @@
                 "profile-details"
               ]
             },
-            "description": "Fetches full profile details with First, Middle, and Last name separated. Python auto-resolves the user token from patientId. Supports grid comparison against hospital enteredData."
+            "description": "Step 4: Calls ABDM GET /abha/api/v3/profile/account using X-token. NO BODY NEEDED! ABDM returns the patient profile with firstName, middleName, lastName, name, yearOfBirth, monthOfBirth, dayOfBirth, gender, mobile, ABHANumber, ABHAAddress, and address."
           }
         },
         {

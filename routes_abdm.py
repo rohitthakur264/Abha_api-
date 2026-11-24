@@ -1,7 +1,7 @@
 """Production ABDM routes: outbound calls, direct webhook receiver, and health check."""
 import uuid
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Header, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
 import abha_service
@@ -592,16 +592,57 @@ async def prodoc_verify_user(req: ProDocVerifyUserRequest):
     return await abha_service.verify_user_account(req.model_dump())
 
 
+@router.get("/api/abdm/register-patient/profile-details", tags=["ProDoc OPD ABHA"])
+@router.get("/api/abdm/profile/account", tags=["ProDoc OPD ABHA"])
+@router.get("/api/abdm/register-patient/get-profile", tags=["ProDoc OPD ABHA"])
 @router.post("/api/abdm/register-patient/profile-details", tags=["ProDoc OPD ABHA"])
+@router.post("/api/abdm/profile/account", tags=["ProDoc OPD ABHA"])
 @router.post("/api/abdm/register-patient/get-profile", tags=["ProDoc OPD ABHA"])
 @router.post("/api/abdm/patients/abha-profile-details", tags=["ProDoc OPD ABHA"])
-async def prodoc_get_profile_details(req: ProDocProfileDetailsRequest):
+async def prodoc_get_profile_details(
+    request: Request,
+    patientId: str | None = None,
+    x_token: str | None = Header(None, alias="X-token"),
+    x_token_lower: str | None = Header(None, alias="x-token"),
+    authorization: str | None = Header(None),
+):
     """
-    Retrieves full profile details with First, Middle, Last name separated.
+    Step 4: Retrieves full profile details directly from ABDM account.
     Calls ABDM: GET /abha/api/v3/profile/account with X-token header.
-    Returns separated name fields for ProDoc grid comparison and DB update.
+    NO BODY REQUIRED!
+    X-token can be passed in Header 'X-token: Bearer <token>', or auto-resolved from active session / patientId.
+    Returns:
+      - ABHANumber, ABHAAddress
+      - firstName, middleName, lastName, name
+      - dob, yearOfBirth, monthOfBirth, dayOfBirth
+      - gender, mobile, address, pincode, stateName, districtName, townName, profilePhoto, status
     """
-    return await abha_service.get_patient_profile_details(req.model_dump())
+    body_data = {}
+    if request.method == "POST":
+        try:
+            body_data = await request.json()
+            if not isinstance(body_data, dict):
+                body_data = {}
+        except Exception:
+            body_data = {}
+
+    eff_token = (
+        body_data.get("token")
+        or body_data.get("X-token")
+        or body_data.get("x_token")
+        or x_token
+        or x_token_lower
+        or (authorization if authorization and "Bearer" in authorization else None)
+        or ""
+    )
+
+    data = dict(body_data)
+    if eff_token:
+        data["token"] = eff_token
+    if patientId:
+        data.setdefault("patientId", patientId)
+
+    return await abha_service.get_patient_profile_details(data)
 
 
 @router.post("/api/abdm/register-patient/link", tags=["ProDoc OPD ABHA"])
