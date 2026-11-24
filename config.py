@@ -45,6 +45,7 @@ ABHA_ENROL_BY_AADHAAR_URL = os.getenv("ABHA_ENROL_BY_AADHAAR_URL", f"{ABHA_BASE_
 ABHA_SEARCH_URL = os.getenv("ABHA_SEARCH_URL", f"{ABHA_BASE_URL}/abha/api/v3/profile/account/abha/search")
 ABHA_LOGIN_REQUEST_OTP_URL = os.getenv("ABHA_LOGIN_REQUEST_OTP_URL", f"{ABHA_BASE_URL}/abha/api/v3/profile/login/request/otp")
 ABHA_LOGIN_VERIFY_OTP_URL = os.getenv("ABHA_LOGIN_VERIFY_OTP_URL", f"{ABHA_BASE_URL}/abha/api/v3/profile/login/verify")
+ABHA_VERIFY_USER_URL = os.getenv("ABHA_VERIFY_USER_URL", f"{ABHA_BASE_URL}/abha/api/v3/profile/login/verify/user")
 ABHA_PROFILE_ACCOUNT_URL = os.getenv("ABHA_PROFILE_ACCOUNT_URL", f"{ABHA_BASE_URL}/abha/api/v3/profile/account")
 ABHA_CARD_URL = os.getenv("ABHA_CARD_URL", f"{ABHA_BASE_URL}/abha/api/v3/profile/account/abha-card")
 ABHA_QR_CODE_URL = os.getenv("ABHA_QR_CODE_URL", f"{ABHA_BASE_URL}/abha/api/v3/profile/account/qrCode")

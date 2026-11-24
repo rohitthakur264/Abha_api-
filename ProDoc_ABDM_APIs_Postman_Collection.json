@@ -709,7 +709,7 @@
           }
         },
         {
-          "name": "3. Register ABHA Link (btnRegisterABHA)",
+          "name": "3. Verify User (Select ABHA Account & Get Token)",
           "request": {
             "method": "POST",
             "header": [
@@ -720,7 +720,69 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"patientId\": \"1\",\n  \"abhaNumber\": \"91372762677683\",\n  \"abhaAddress\": \"thakurrohan2@sbx\"\n}"
+              "raw": "{\n  \"ABHANumber\": \"91-6516-7118-7011\",\n  \"txnId\": \"{{abha_otp_txn_id}}\",\n  \"patientId\": \"1\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/register-patient/verify-user",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "register-patient",
+                "verify-user"
+              ]
+            },
+            "description": "Calls ABDM POST /abha/api/v3/profile/login/verify/user. Passes ABHANumber and txnId with session T-token. Returns user token needed for profile details."
+          }
+        },
+        {
+          "name": "4. Get Profile Detail (Name Breakdown: First, Middle, Last)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"1\",\n  \"token\": \"{{user_token}}\",\n  \"enteredData\": {\n    \"firstName\": \"Rahul\",\n    \"middleName\": \"Arun\",\n    \"lastName\": \"Kumar\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8000/api/abdm/register-patient/profile-details",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8000",
+              "path": [
+                "api",
+                "abdm",
+                "register-patient",
+                "profile-details"
+              ]
+            },
+            "description": "Calls ABDM GET /abha/api/v3/profile/account using X-token. Returns clean separated Name fields (firstName, middleName, lastName, name), DOB, and grid comparison data for UI selection."
+          }
+        },
+        {
+          "name": "5. Register ABHA Link (btnRegisterABHA)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"1\",\n  \"regNo\": \"1\",\n  \"abhaNumber\": \"91-6516-7118-7011\",\n  \"abhaAddress\": \"panchkuttinabil09@sbx\",\n  \"firstName\": \"Rahul\",\n  \"middleName\": \"Arun\",\n  \"lastName\": \"Kumar\"\n}"
             },
             "url": {
               "raw": "http://localhost:8000/api/abdm/register-patient/link",

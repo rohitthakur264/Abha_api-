@@ -145,6 +145,31 @@ class ProDocRegisterAbhaRequest(BaseModel):
     ABHANumber: str | None = None
     abhaAddress: str | None = None
     ABHAAddress: str | None = None
+    firstName: str | None = None
+    middleName: str | None = None
+    lastName: str | None = None
+    name: str | None = None
+
+
+class ProDocVerifyUserRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    ABHANumber: str | None = None
+    abhaNumber: str | None = None
+    txnId: str | None = None
+    transactionId: str | None = None
+    patientId: str | None = None
+    regNo: str | None = None
+    token: str | None = None
+    t_token: str | None = None
+
+
+class ProDocProfileDetailsRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    patientId: str | None = None
+    regNo: str | None = None
+    token: str | None = None
+    x_token: str | None = None
+    enteredData: dict | None = None
 
 
 class PatientAbhaProfileRequest(BaseModel):
@@ -553,6 +578,30 @@ async def prodoc_register_patient_verify_otp(req: ProDocVerifyOtpRequest):
     Verifies OTP with ABDM and returns ABHA Number, ABHA Address, Name, Gender, DOB.
     """
     return await abha_service.verify_patient_abha_otp(req.model_dump())
+
+
+@router.post("/api/abdm/register-patient/verify-user", tags=["ProDoc OPD ABHA"])
+@router.post("/api/abdm/abha/verify-user", tags=["ProDoc OPD ABHA"])
+@router.post("/api/abdm/profile/login/verify/user", tags=["ProDoc OPD ABHA"])
+async def prodoc_verify_user(req: ProDocVerifyUserRequest):
+    """
+    Called after Verify OTP when user selects an ABHA account.
+    Calls ABDM: POST /abha/api/v3/profile/login/verify/user
+    Returns token required for profile details.
+    """
+    return await abha_service.verify_user_account(req.model_dump())
+
+
+@router.post("/api/abdm/register-patient/profile-details", tags=["ProDoc OPD ABHA"])
+@router.post("/api/abdm/register-patient/get-profile", tags=["ProDoc OPD ABHA"])
+@router.post("/api/abdm/patients/abha-profile-details", tags=["ProDoc OPD ABHA"])
+async def prodoc_get_profile_details(req: ProDocProfileDetailsRequest):
+    """
+    Retrieves full profile details with First, Middle, Last name separated.
+    Calls ABDM: GET /abha/api/v3/profile/account with X-token header.
+    Returns separated name fields for ProDoc grid comparison and DB update.
+    """
+    return await abha_service.get_patient_profile_details(req.model_dump())
 
 
 @router.post("/api/abdm/register-patient/link", tags=["ProDoc OPD ABHA"])
