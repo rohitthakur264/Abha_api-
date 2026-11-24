@@ -196,7 +196,57 @@ def generate_pdf():
         ("BOTTOMPADDING", (0, 1), (-1, -1), 4),
     ]))
     story.append(t_summary)
-    story.append(Spacer(1, 12))
+    story.append(Spacer(1, 10))
+
+    # Section 2: Internal Auto-Mapping & Token Management Architecture
+    story.append(Paragraph("2. Internal Auto-Mapping & Token Architecture", h1_style))
+    auto_pdf_data = [
+        [Paragraph("<b>Engine / Feature</b>", normal_style), Paragraph("<b>Internal Mechanism in Code</b>", normal_style), Paragraph("<b>Impact on ProDoc & Hospital Workflow</b>", normal_style)],
+        [Paragraph("<b>GLOBAL_ACCESS_TOKEN</b>", normal_style), Paragraph("Stored in global memory variables. <code>get_access_token()</code> checks if <code>now < expiry - 30s</code>. If expired or not set, calls Gateway <code>/sessions</code> and auto-refreshes.", normal_style), Paragraph("Zero token handling in VB.NET. Calls never fail with 401 Unauthorized.", normal_style)],
+        [Paragraph("<b>X-LINK-TOKEN (180 Days)</b>", normal_style), Paragraph("Evaluated via <code>is_link_token_valid()</code>. If missing or expired, Python calls <code>/token/generate-token</code>, receives token via webhook, and returns <code>linkToken</code> + 180-day expiry to ProDoc.", normal_style), Paragraph("ProDoc stores linkToken in DB. Links care contexts for 6 months without re-authenticating.", normal_style)],
+        [Paragraph("<b>txnId Auto-Mapping</b>", normal_style), Paragraph("Send OTP maps <code>txnId</code> across 4 keys: txnId, patientId, mobile, abhaAddress. Verify OTP & get-profile auto-resolve txnId from active session.", normal_style), Paragraph("VB.NET clicks 'Select Account' with zero body <code>{}</code> without copying txnId.", normal_style)],
+        [Paragraph("<b>T-token vs X-token Routing</b>", normal_style), Paragraph("ABDM requires T-token for <code>/verify/user</code>, and X-token for <code>/profile/account</code>. Python dynamically formats appropriate headers internally.", normal_style), Paragraph("Developer doesn't need to learn dual-token difference; fully abstracted.", normal_style)]
+    ]
+    t_auto = Table(auto_pdf_data, colWidths=[110, 240, 173])
+    t_auto.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0F4C81")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
+        ("TOPPADDING", (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ("BACKGROUND", (0, 1), (-1, 1), colors.HexColor("#F8FAFC")),
+        ("BACKGROUND", (0, 2), (-1, 2), colors.white),
+        ("BACKGROUND", (0, 3), (-1, 3), colors.HexColor("#F8FAFC")),
+        ("BACKGROUND", (0, 4), (-1, 4), colors.white),
+    ]))
+    story.append(t_auto)
+    story.append(Spacer(1, 10))
+
+    # Section 3: When does store.py get into action
+    story.append(Paragraph("3. When Does store.py Get in Action? (Lifecycle)", h1_style))
+    timeline_pdf = [
+        ["Timeline / Event", "store.py Functions Triggered", "Action & Architectural Impact"],
+        ["1. Server Boot (t = 0)", "_load_cache(), _load_m1_cache()", "Loads 5 JSON files. Evaluates JWT exp timestamps to eliminate expired tokens."],
+        ["2. Send OTP", "store.m1_otp_txns[txn_id]", "Tracks transaction metadata across patientId, mobile, and txnId for auto-matching."],
+        ["3. Verify OTP", "save_m1_token(), save_m1_profile()", "Persists authenticated citizen token, real DOB, and accounts to disk."],
+        ["4. Select Account", "get_m1_token(), get_m1_profile()", "CRUCIAL FALLBACK: If ABDM sandbox 2-min session expired, provides cached profile for 200 OK."],
+        ["5. Register Link", "save_m1_linked(reg_no, data)", "Permanently links hospital patient RegNo to ABHANumber & ABHAAddress."],
+        ["6. Care Context", "is_link_token_valid(), save_token()", "Verifies 180-day linkToken validity. Generates fresh token if expired. Tracks txnId."],
+        ["7. Webhook Push", "seen_uuids.add(), pending_events.set()", "Dedupes callback by UUID, logs acknowledgment, and unblocks waiting async calls."]
+    ]
+    t_tbl = Table(timeline_pdf, colWidths=[95, 145, 283])
+    t_tbl.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0F4C81")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 7.5),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
+        ("FONTSIZE", (0, 1), (-1, -1), 7),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+    ]))
+    story.append(t_tbl)
+    story.append(Spacer(1, 10))
 
     # Helper function to add API block
     def add_api_pdf(num, name, category, method, url, desc, req_json, res_json, logic_list, abdm_hits, abdm_urls, is_extra=False):

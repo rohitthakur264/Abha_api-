@@ -128,9 +128,85 @@ def build_word_document():
     doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
     # =========================================================================
+    # SECTION 2: INTERNAL AUTO-MAPPING & TOKEN ARCHITECTURE
+    # =========================================================================
+    h_auto = doc.add_heading("2. Internal Auto-Mapping & Token Management Architecture", level=1)
+    h_auto.paragraph_format.space_before = Pt(16)
+    h_auto.paragraph_format.space_after = Pt(6)
+    for r in h_auto.runs:
+        r.font.name = "Calibri"
+        r.font.size = Pt(16)
+        r.font.color.rgb = RGBColor(15, 76, 129)
+
+    p_auto_desc = doc.add_paragraph(
+        "To make hospital integration effortless for ProDoc and prevent complex token handling in VB.NET, "
+        "the Python middleware implements 4 dedicated automated state engines:"
+    )
+    p_auto_desc.paragraph_format.space_after = Pt(6)
+
+    tbl_auto = doc.add_table(rows=5, cols=3)
+    tbl_auto.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tbl_auto.autofit = False
+    col_w_auto = [Inches(1.8), Inches(2.3), Inches(2.5)]
+
+    for i, h_text in enumerate(["Engine / Feature", "Internal Mechanism in Code", "Impact on ProDoc & Hospital Workflow"]):
+        cell = tbl_auto.rows[0].cells[i]
+        cell.width = col_w_auto[i]
+        set_cell_background(cell, "0F4C81")
+        set_cell_margins(cell, top=100, bottom=100, left=100, right=100)
+        p = cell.paragraphs[0]
+        r = p.add_run(h_text)
+        r.bold = True
+        r.font.name = "Calibri"
+        r.font.size = Pt(9)
+        r.font.color.rgb = RGBColor(255, 255, 255)
+
+    auto_data = [
+        ("1. Global Gateway Session Token (GLOBAL_ACCESS_TOKEN)",
+         "Stored in global memory variables: GLOBAL_ACCESS_TOKEN & GLOBAL_ACCESS_TOKEN_EXPIRY. get_access_token() checks if now < expiry - 30s. If expired or not set, calls Gateway /sessions and auto-refreshes.",
+         "Zero token management for ProDoc. Outbound calls never fail with 401 Unauthorized. Auto-refreshes seamlessly in background."),
+        
+        ("2. X-LINK-TOKEN (180-Day Care Context Token)",
+         "Evaluated via is_link_token_valid(). If ProDoc has a token, passes it. If missing or expired, Python auto-calls /token/generate-token, receives token via webhook, and returns linkToken + remainingDays (180) to ProDoc.",
+         "ProDoc stores the returned linkToken in hospital DB. Care context linking runs with 180-day validity without re-authenticating the patient repeatedly."),
+        
+        ("3. txnId / transactionId Multi-Key Auto-Mapping",
+         "When Send OTP returns txnId, store.m1_otp_txns maps it under 4 keys: txnId, patientId, mobile, abhaAddress. Verify OTP & get-abha-profile auto-resolve txnId from active session.",
+         "VB.NET buttons don't need to pass transaction IDs manually. User clicks 'Select Account' with zero body {}, and Python auto-maps txnId."),
+        
+        ("4. T-token vs X-token Header Routing",
+         "ABDM requires T-token for /verify/user, and X-token for /profile/account. Python inspects the endpoint and dynamically attaches 'T-token: Bearer ...' or 'X-token: Bearer ...'.",
+         "ProDoc developers do not need to understand ABDM's dual-token system. Python handles both tokens internally.")
+    ]
+
+    for r_idx, (c0, c1, c2) in enumerate(auto_data, start=1):
+        row = tbl_auto.rows[r_idx]
+        bg_col = "F8FAFC" if r_idx % 2 == 1 else "FFFFFF"
+        for c_idx, val in enumerate([c0, c1, c2]):
+            cell = row.cells[c_idx]
+            cell.width = col_w_auto[c_idx]
+            set_cell_background(cell, bg_col)
+            set_cell_margins(cell, top=80, bottom=80, left=100, right=100)
+            p = cell.paragraphs[0]
+            r = p.add_run(val)
+            r.font.name = "Calibri"
+            r.font.size = Pt(8.5)
+            if c_idx == 0:
+                r.bold = True
+                r.font.color.rgb = RGBColor(15, 76, 129)
+            elif c_idx == 1:
+                r.font.name = "Consolas"
+                r.font.size = Pt(8)
+                r.font.color.rgb = RGBColor(180, 83, 9)
+            else:
+                r.font.color.rgb = RGBColor(30, 41, 59)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(12)
+
+    # =========================================================================
     # PART 1: BASE SPECIFICATION APIS (APIS 1 TO 10)
     # =========================================================================
-    h_p1 = doc.add_heading("2. Base Specification APIs (From Excel/XML Contract)", level=1)
+    h_p1 = doc.add_heading("3. Base Specification APIs (From Excel/XML Contract)", level=1)
     h_p1.paragraph_format.space_before = Pt(18)
     h_p1.paragraph_format.space_after = Pt(8)
     for r in h_p1.runs:
