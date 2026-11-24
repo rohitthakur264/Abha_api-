@@ -60,9 +60,11 @@ WEBHOOK_SITE_API = f"{WEBHOOK_SITE_BASE}/token/{WEBHOOK_SITE_TOKEN}/requests" if
 HTTP_TIMEOUT = float(os.getenv("HTTP_TIMEOUT", "35"))
 POLL_TIMEOUT = float(os.getenv("POLL_TIMEOUT", "20"))
 POLL_SECONDS = int(os.getenv("POLL_SECONDS", "5"))
-POLL_STEP_SECONDS = float(os.getenv("POLL_STEP_SECONDS", "2.0"))
-CALLBACK_WAIT_SECONDS = float(os.getenv("CALLBACK_WAIT_SECONDS", "35"))
-SIMULATE_WAIT_SECONDS = float(os.getenv("SIMULATE_WAIT_SECONDS", "8"))
+POLL_STEP_SECONDS = float(os.getenv("POLL_STEP_SECONDS", "0.5"))
+# Reduced from 35s to 2.0s: if ABDM callback takes longer (up to 10 min),
+# returns 'PENDING' immediately after 2 sec so ProDoc UI never hangs.
+CALLBACK_WAIT_SECONDS = float(os.getenv("CALLBACK_WAIT_SECONDS", "2.0"))
+SIMULATE_WAIT_SECONDS = float(os.getenv("SIMULATE_WAIT_SECONDS", "2.0"))
 WEBHOOK_PER_PAGE = int(os.getenv("WEBHOOK_PER_PAGE", "50"))
 RATE_LIMIT_BACKOFF_SECONDS = int(os.getenv("RATE_LIMIT_BACKOFF_SECONDS", "3"))
 TOKEN_EXPIRY_FALLBACK = int(os.getenv("TOKEN_EXPIRY_FALLBACK", "600"))
