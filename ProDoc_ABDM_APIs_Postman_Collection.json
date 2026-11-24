@@ -740,19 +740,24 @@
           }
         },
         {
-          "name": "4. Get Profile Detail (GET ABDM Profile - No Body Needed)",
+          "name": "4. Get Profile Detail (POST from ProDoc/Postman)",
           "request": {
-            "method": "GET",
+            "method": "POST",
             "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
               {
                 "key": "X-token",
                 "value": "Bearer {{user_token}}",
                 "type": "text",
-                "description": "X-token received from verify-user response (auto-mapped if omitted)"
+                "description": "Optional if patientId is provided (Python auto-maps token from active session)"
               }
             ],
             "body": {
-              "mode": "none"
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"145\"\n}"
             },
             "url": {
               "raw": "http://localhost:8000/api/abdm/register-patient/profile-details",
@@ -768,7 +773,7 @@
                 "profile-details"
               ]
             },
-            "description": "Step 4: Calls ABDM GET /abha/api/v3/profile/account using X-token. NO BODY NEEDED! ABDM returns the patient profile with firstName, middleName, lastName, name, yearOfBirth, monthOfBirth, dayOfBirth, gender, mobile, ABHANumber, ABHAAddress, and address."
+            "description": "Called as POST by ProDoc and Postman. Only pass patientId (no name fields needed!). Python calls ABDM GET /abha/api/v3/profile/account and returns firstName, middleName, lastName, name, dob, ABHANumber, ABHAAddress, and mobile."
           }
         },
         {
