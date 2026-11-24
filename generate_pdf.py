@@ -398,11 +398,12 @@ def generate_pdf():
     # API 5
     story.extend(add_api_pdf(
         "5", "Get Patient ABHA Profile", "Milestone 1 (Base Contract)",
-        "GET", "/api/abdm/patients/145/abha-profile",
-        "Fetches full demographic profile for a linked patient from ABDM or persistent cache.",
-        "None (Path parameter patientId in URL). Also accepts POST with {'patientId': '145'}",
+        "POST", "/api/abdm/patients/abha-profile",
+        "Fetches full demographic profile for a linked patient. ProDoc sends POST with patientId in JSON body (also supports GET).",
+        json.dumps({"patientId": "145"}, indent=2),
         json.dumps({"success": True, "patientId": "145", "ABHANumber": "91372762677683", "ABHAAddress": "thakurrohan2@sbx", "firstName": "Rohan", "lastName": "Thakur", "dob": "2008-10-08", "status": "ACTIVE"}, indent=2),
         [
+            "Receives patientId from JSON request body.",
             "Retrieves cached citizen token (X-token) for patientId.",
             "Calls ABDM profile/account endpoint with X-token header.",
             "Falls back gracefully to cached profile if sandbox session is expired."
@@ -414,11 +415,12 @@ def generate_pdf():
     # API 6
     story.extend(add_api_pdf(
         "6", "Get ABHA Card (PDF / Base64)", "Milestone 1 (Base Contract)",
-        "GET", "/api/abdm/patients/145/abha-card",
-        "Downloads official graphical ABHA card (PDF or PNG) for the patient.",
-        "None (Path parameter patientId). Also accepts POST with {'patientId': '145', 'format': 'PDF'}",
+        "POST", "/api/abdm/patients/abha-card",
+        "Downloads official graphical ABHA card (PDF). ProDoc sends POST with patientId in JSON body (also supports GET).",
+        json.dumps({"patientId": "145", "format": "PDF"}, indent=2),
         json.dumps({"success": True, "patientId": "145", "format": "PDF", "cardData": "JVBERi0xLjQKJ...", "message": "ABHA card retrieved successfully"}, indent=2),
         [
+            "Receives patientId and format from JSON request body.",
             "Passes citizen user token to ABDM Card endpoint.",
             "Receives binary stream and encodes into base64 string for ProDoc."
         ],
@@ -429,11 +431,12 @@ def generate_pdf():
     # API 7
     story.extend(add_api_pdf(
         "7", "Get ABHA QR Code", "Milestone 1 (Base Contract)",
-        "GET", "/api/abdm/patients/145/abha-qr",
-        "Retrieves the official ABDM QR code image for fast scan & share registration.",
-        "None (Path parameter patientId). Also accepts POST with {'patientId': '145'}",
+        "POST", "/api/abdm/patients/abha-qr",
+        "Retrieves official ABDM QR code image. ProDoc sends POST with patientId in JSON body (also supports GET).",
+        json.dumps({"patientId": "145"}, indent=2),
         json.dumps({"success": True, "patientId": "145", "qrCode": "data:image/png;base64,iVBORw0KGgo...", "message": "ABHA QR code retrieved successfully"}, indent=2),
         [
+            "Receives patientId from JSON request body.",
             "Calls ABDM qrCode endpoint with patient session token.",
             "Returns base64 data URI to render directly in ProDoc picture box."
         ],
@@ -461,11 +464,12 @@ def generate_pdf():
     # API 9
     story.extend(add_api_pdf(
         "9", "Get Care Context Linking Status", "Milestone 2 (Base Contract)",
-        "GET", "/api/abdm/hip/care-context/status/TXN-CC-48DF1A0E",
-        "Queries live status of an asynchronous care-context linking transaction.",
-        "None (Path parameter transactionId)",
+        "POST", "/api/abdm/hip/care-context/status",
+        "Queries live status of an asynchronous care-context linking transaction. ProDoc sends POST with transactionId (also supports GET).",
+        json.dumps({"transactionId": "TXN-CC-48DF1A0E", "patientId": "145"}, indent=2),
         json.dumps({"success": True, "transactionId": "TXN-CC-48DF1A0E", "status": "SUCCESS", "patientId": "145", "message": "Care context linking completed"}, indent=2),
         [
+            "Receives transactionId from JSON request body.",
             "Looks up transactionId in care_context_transactions store.",
             "Returns status updated by ABDM webhook callback (SUCCESS, PENDING, or FAILED)."
         ],
@@ -476,11 +480,12 @@ def generate_pdf():
     # API 10
     story.extend(add_api_pdf(
         "10", "List Patient Care Contexts", "Milestone 2 (Base Contract)",
-        "GET", "/api/abdm/patients/145/care-contexts",
-        "Lists all care contexts linked to a patient record in ProDoc.",
-        "None (Path parameter patientId)",
+        "POST", "/api/abdm/patients/care-contexts",
+        "Lists all care contexts linked to a patient record in ProDoc. ProDoc sends POST with patientId in JSON body (also supports GET).",
+        json.dumps({"patientId": "145"}, indent=2),
         json.dumps({"success": True, "patientId": "145", "careContexts": [{"referenceNumber": "OPD-145-001", "display": "OPD Consultation - Patient 145", "status": "LINKED"}]}, indent=2),
         [
+            "Receives patientId from JSON request body.",
             "Queries all historical care-context records linked to patientId.",
             "Returns array of encounter reference numbers and display titles."
         ],

@@ -373,10 +373,12 @@ def build_word_document():
         api_num="5",
         name="Get Patient ABHA Profile",
         category="Milestone 1 (Base Contract)",
-        method="GET",
-        url="/api/abdm/patients/145/abha-profile",
-        desc="Fetches full demographic profile for a linked patient from ABDM or persistent cache.",
-        req_body="None (Path parameter patientId in URL). Also accepts POST with {'patientId': '145'}",
+        method="POST",
+        url="/api/abdm/patients/abha-profile",
+        desc="Fetches full demographic profile for a linked patient. ProDoc sends POST with patientId in JSON body (also supports GET).",
+        req_body=json.dumps({
+            "patientId": "145"
+        }, indent=2),
         res_body=json.dumps({
             "success": True,
             "patientId": "145",
@@ -393,6 +395,7 @@ def build_word_document():
             "message": "ABHA profile retrieved successfully"
         }, indent=2),
         internal_logic=[
+            "Receives patientId from JSON request body.",
             "Retrieves cached citizen token (X-token) for the patientId.",
             "Attempts live fetch from ABDM profile/account endpoint with X-token header.",
             "Falls back gracefully to cached profile if sandbox session is expired or offline."
@@ -409,10 +412,13 @@ def build_word_document():
         api_num="6",
         name="Get ABHA Card (PDF / Base64)",
         category="Milestone 1 (Base Contract)",
-        method="GET",
-        url="/api/abdm/patients/145/abha-card",
-        desc="Downloads the official graphical ABHA card (PDF or PNG) for the patient.",
-        req_body="None (Path parameter patientId). Also accepts POST with {'patientId': '145', 'format': 'PDF'}",
+        method="POST",
+        url="/api/abdm/patients/abha-card",
+        desc="Downloads the official graphical ABHA card (PDF). ProDoc sends POST with patientId in JSON body (also supports GET).",
+        req_body=json.dumps({
+            "patientId": "145",
+            "format": "PDF"
+        }, indent=2),
         res_body=json.dumps({
             "success": True,
             "patientId": "145",
@@ -421,8 +427,9 @@ def build_word_document():
             "message": "ABHA card retrieved successfully"
         }, indent=2),
         internal_logic=[
-            "Resolves user token for patientId.",
-            "Sends request to ABDM ABHA Card endpoint with X-token.",
+            "Receives patientId and desired format from JSON request body.",
+            "Resolves user token for patientId from persistent store.",
+            "Sends request to ABDM ABHA Card endpoint with X-token header.",
             "Encodes binary stream into base64 string for ProDoc."
         ],
         abdm_hits=1,
@@ -437,10 +444,12 @@ def build_word_document():
         api_num="7",
         name="Get ABHA QR Code",
         category="Milestone 1 (Base Contract)",
-        method="GET",
-        url="/api/abdm/patients/145/abha-qr",
-        desc="Retrieves the official ABDM QR code image for fast scan & share registration.",
-        req_body="None (Path parameter patientId). Also accepts POST with {'patientId': '145'}",
+        method="POST",
+        url="/api/abdm/patients/abha-qr",
+        desc="Retrieves the official ABDM QR code image. ProDoc sends POST with patientId in JSON body (also supports GET).",
+        req_body=json.dumps({
+            "patientId": "145"
+        }, indent=2),
         res_body=json.dumps({
             "success": True,
             "patientId": "145",
@@ -448,7 +457,8 @@ def build_word_document():
             "message": "ABHA QR code retrieved successfully"
         }, indent=2),
         internal_logic=[
-            "Retrieves patient session token.",
+            "Receives patientId from JSON request body.",
+            "Retrieves patient session token from store.",
             "Calls ABDM qrCode endpoint.",
             "Returns base64 data URI to render directly in ProDoc picture box."
         ],
@@ -514,10 +524,13 @@ def build_word_document():
         api_num="9",
         name="Get Care Context Linking Status",
         category="Milestone 2 (Base Contract)",
-        method="GET",
-        url="/api/abdm/hip/care-context/status/TXN-CC-48DF1A0E",
-        desc="Queries live status of an asynchronous care-context linking transaction.",
-        req_body="None (Path parameter transactionId or abdm_request_id)",
+        method="POST",
+        url="/api/abdm/hip/care-context/status",
+        desc="Queries live status of an asynchronous care-context linking transaction. ProDoc sends POST with transactionId in JSON body (also supports GET).",
+        req_body=json.dumps({
+            "transactionId": "TXN-CC-48DF1A0E",
+            "patientId": "145"
+        }, indent=2),
         res_body=json.dumps({
             "success": True,
             "transactionId": "TXN-CC-48DF1A0E",
@@ -527,6 +540,7 @@ def build_word_document():
             "message": "Care context linking completed successfully"
         }, indent=2),
         internal_logic=[
+            "Receives transactionId from JSON request body.",
             "Looks up transactionId in care_context_transactions store.",
             "Returns status updated by ABDM webhook callback (SUCCESS, PENDING, or FAILED)."
         ],
@@ -540,10 +554,12 @@ def build_word_document():
         api_num="10",
         name="List Patient Care Contexts",
         category="Milestone 2 (Base Contract)",
-        method="GET",
-        url="/api/abdm/patients/145/care-contexts",
-        desc="Lists all care contexts linked to a patient record in ProDoc.",
-        req_body="None (Path parameter patientId)",
+        method="POST",
+        url="/api/abdm/patients/care-contexts",
+        desc="Lists all care contexts linked to a patient record in ProDoc. ProDoc sends POST with patientId in JSON body (also supports GET).",
+        req_body=json.dumps({
+            "patientId": "145"
+        }, indent=2),
         res_body=json.dumps({
             "success": True,
             "patientId": "145",
@@ -556,6 +572,7 @@ def build_word_document():
             ]
         }, indent=2),
         internal_logic=[
+            "Receives patientId from JSON request body.",
             "Queries all historical care-context records linked to patientId.",
             "Returns array of encounter reference numbers and display titles."
         ],

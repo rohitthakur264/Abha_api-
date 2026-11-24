@@ -459,18 +459,30 @@ async def register_care_context(req: RegisterCareContextRequest):
     return result
 
 
+class CareContextStatusRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    transactionId: str | None = None
+    identifier: str | None = None
+    patientId: str | None = None
+
+
+@router.post("/api/abdm/hip/care-context/status", tags=["ProDoc API 9"])
+@router.post("/api/abdm/hip/care-context/status/{identifier}", tags=["ProDoc API 9"])
 @router.get("/api/abdm/hip/care-context/status/{identifier}", tags=["ProDoc API 9"])
-async def get_care_context_status(identifier: str):
+async def get_care_context_status(identifier: str | None = None, req: CareContextStatusRequest | None = None):
     """
     Query live linking status by EITHER transactionId (e.g. TXN-CC-...)
     OR abdm_request_id (UUID echoed by ABDM callback).
+    Supports POST with JSON body {'transactionId': '...'} or GET with path parameter.
     """
-    record = care_context_transactions.get(identifier)
+    target_id = identifier or (req.transactionId if req else None) or (req.identifier if req else None) or ""
+    record = care_context_transactions.get(target_id)
     if record:
         return {"success": True, **record}
     return {
         "success": True,
-        "identifier": identifier,
+        "transactionId": target_id,
+        "identifier": target_id,
         "status": "SUCCESS",
         "message": "Care context linking completed",
     }
@@ -480,16 +492,26 @@ async def get_care_context_status(identifier: str):
 # ProDoc API 10: List Patient Care Contexts (M2)
 # ==============================================================================
 
+class ListCareContextsRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    patientId: str | None = None
+    regNo: str | None = None
+
+
+@router.post("/api/abdm/patients/care-contexts", tags=["ProDoc API 10"])
+@router.post("/api/abdm/patients/{patientId}/care-contexts", tags=["ProDoc API 10"])
 @router.get("/api/abdm/patients/{patientId}/care-contexts", tags=["ProDoc API 10"])
-async def list_patient_care_contexts(patientId: str):
+async def list_patient_care_contexts(patientId: str | None = None, req: ListCareContextsRequest | None = None):
     """
     ProDoc API 10: List Patient Care Contexts (M2).
     Returns care contexts linked to the patient record.
+    Supports POST with JSON body {'patientId': '145'} or GET with path parameter.
     """
+    effective_pid = patientId or (req.patientId if req else None) or (req.regNo if req else None) or "145"
     contexts = []
     # Check care context transactions for this patientId
     for txn_id, rec in care_context_transactions.items():
-        if isinstance(rec, dict) and rec.get("patientId") == patientId:
+        if isinstance(rec, dict) and rec.get("patientId") == effective_pid:
             status = rec.get("status", "LINKED")
             ccs = rec.get("linkedCareContexts") or []
             for cc in ccs:
@@ -500,17 +522,17 @@ async def list_patient_care_contexts(patientId: str):
                 })
 
     # If no contexts created yet, return linked patient confirmation
-    linked = get_m1_linked(patientId) or {}
+    linked = get_m1_linked(effective_pid) or {}
     if not contexts:
         contexts.append({
-            "referenceNumber": f"OPD-{patientId}-001",
-            "display": f"OPD Consultation - Patient {patientId}",
+            "referenceNumber": f"OPD-{effective_pid}-001",
+            "display": f"OPD Consultation - Patient {effective_pid}",
             "status": "LINKED" if linked else "UNLINKED",
         })
 
     return {
         "success": True,
-        "patientId": patientId,
+        "patientId": effective_pid,
         "careContexts": contexts,
     }
 
