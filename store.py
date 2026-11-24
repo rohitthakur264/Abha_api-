@@ -264,6 +264,9 @@ def get_m1_profile(patient_id: str) -> dict:
 def load_all_m1_linked() -> dict[str, dict]:
     return _load_m1_linked()
 
+def load_all_m1_tokens() -> dict[str, dict]:
+    return _load_m1_cache()
+
 def load_all_m1_profiles() -> dict[str, dict]:
     return _load_m1_profiles()
 
