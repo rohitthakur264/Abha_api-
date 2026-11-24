@@ -642,7 +642,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"abhaAddress\": \"thakurrohan2@sbx\",\n  \"patientId\": \"1\"\n}"
+              "raw": "{\n  \"ABHAAddress\": \"thakurrohan2@sbx\",\n  \"patientId\": \"1\"\n}"
             },
             "url": {
               "raw": "http://localhost:8000/api/abdm/register-patient/send-otp",
@@ -689,7 +689,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"abhaAddress\": \"thakurrohan2@sbx\",\n  \"otp\": \"001689\",\n  \"patientId\": \"1\"\n}"
+              "raw": "{\n  \"ABHAAddress\": \"thakurrohan2@sbx\",\n  \"otp\": \"001689\",\n  \"patientId\": \"1\"\n}"
             },
             "url": {
               "raw": "http://localhost:8000/api/abdm/register-patient/verify-otp",
@@ -720,7 +720,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"ABHANumber\": \"91-6516-7118-7011\",\n  \"txnId\": \"{{abha_otp_txn_id}}\",\n  \"patientId\": \"1\"\n}"
+              "raw": "{\n  \"ABHANumber\": \"91372762677683\",\n  \"patientId\": \"1\"\n}"
             },
             "url": {
               "raw": "http://localhost:8000/api/abdm/register-patient/verify-user",
@@ -736,7 +736,7 @@
                 "verify-user"
               ]
             },
-            "description": "Calls ABDM POST /abha/api/v3/profile/login/verify/user. Passes ABHANumber and txnId with session T-token. Returns user token needed for profile details."
+            "description": "Selects ABHA account after OTP verification. Python automatically maps txnId and T-token from the active session so you only need to pass ABHANumber and patientId."
           }
         },
         {
@@ -751,7 +751,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"patientId\": \"1\",\n  \"token\": \"{{user_token}}\",\n  \"enteredData\": {\n    \"firstName\": \"Rahul\",\n    \"middleName\": \"Arun\",\n    \"lastName\": \"Kumar\"\n  }\n}"
+              "raw": "{\n  \"patientId\": \"1\",\n  \"enteredData\": {\n    \"firstName\": \"Rahul\",\n    \"middleName\": \"Arun\",\n    \"lastName\": \"Kumar\"\n  }\n}"
             },
             "url": {
               "raw": "http://localhost:8000/api/abdm/register-patient/profile-details",
@@ -767,7 +767,7 @@
                 "profile-details"
               ]
             },
-            "description": "Calls ABDM GET /abha/api/v3/profile/account using X-token. Returns clean separated Name fields (firstName, middleName, lastName, name), DOB, and grid comparison data for UI selection."
+            "description": "Fetches full profile details with First, Middle, and Last name separated. Python auto-resolves the user token from patientId. Supports grid comparison against hospital enteredData."
           }
         },
         {
@@ -782,7 +782,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"patientId\": \"1\",\n  \"regNo\": \"1\",\n  \"abhaNumber\": \"91-6516-7118-7011\",\n  \"abhaAddress\": \"panchkuttinabil09@sbx\",\n  \"firstName\": \"Rahul\",\n  \"middleName\": \"Arun\",\n  \"lastName\": \"Kumar\"\n}"
+              "raw": "{\n  \"patientId\": \"1\",\n  \"regNo\": \"1\",\n  \"ABHANumber\": \"91372762677683\",\n  \"ABHAAddress\": \"thakurrohan2@sbx\",\n  \"firstName\": \"Rahul\",\n  \"middleName\": \"Arun\",\n  \"lastName\": \"Kumar\"\n}"
             },
             "url": {
               "raw": "http://localhost:8000/api/abdm/register-patient/link",

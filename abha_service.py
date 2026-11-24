@@ -26,6 +26,7 @@ from store import (
     save_m1_linked,
     save_m1_profile,
     save_m1_search,
+    get_m1_token,
     get_m1_linked,
     get_m1_profile,
     load_all_m1_linked,
@@ -772,8 +773,8 @@ async def get_patient_profile(patient_id: str) -> dict:
                     "success": True,
                     "patientId": patient_id,
                     "abhaProfile": {
-                        "abhaNumber": raw_num,
-                        "abhaAddress": raw_addr,
+                        "ABHANumber": raw_num,
+                        "ABHAAddress": raw_addr,
                         "name": profile.get("name") or "",
                         "gender": profile.get("gender") or "",
                         "dob": dob,
@@ -793,17 +794,22 @@ async def get_patient_profile(patient_id: str) -> dict:
         p = cached or {}
         search_match = (search_meta.get("matches") or [{}])[0] if search_meta else {}
         raw_num_source = str(
-            (linked.get("abhaNumber") if linked else None)
+            (linked.get("ABHANumber") if linked else None)
+            or (linked.get("abhaNumber") if linked else None)
             or p.get("ABHANumber")
             or p.get("abhaNumber")
+            or search_match.get("ABHANumber")
             or search_match.get("abhaNumber")
             or ""
         ).strip()
         num_val = raw_num_source.replace("-", "") if not raw_num_source.lower().startswith("x") else raw_num_source
         addr_val = (
-            (linked.get("abhaAddress") if linked else None)
+            (linked.get("ABHAAddress") if linked else None)
+            or (linked.get("abhaAddress") if linked else None)
+            or p.get("ABHAAddress")
             or p.get("preferredAbhaAddress")
             or p.get("abhaAddress")
+            or search_match.get("ABHAAddress")
             or search_match.get("abhaAddress")
             or ""
         )
@@ -831,8 +837,8 @@ async def get_patient_profile(patient_id: str) -> dict:
             "success": True,
             "patientId": patient_id,
             "abhaProfile": {
-                "abhaNumber": num_val,
-                "abhaAddress": addr_val,
+                "ABHANumber": num_val,
+                "ABHAAddress": addr_val,
                 "name": name,
                 "gender": gender,
                 "dob": dob,
@@ -1288,13 +1294,13 @@ async def verify_patient_abha_otp(data: dict) -> dict:
             status = prof_source.get("status") or "ACTIVE"
             verified_status = prof_source.get("verifiedStatus") or "VERIFIED"
 
-            # Normalize accounts list
+            # Normalize accounts list - strictly using ABHANumber and ABHAAddress
             normalized_accounts = []
             for acc in accounts_raw:
                 acc_dob = extract_dob_from_abdm(acc) or dob
                 normalized_accounts.append({
-                    "abhaNumber": str(acc.get("ABHANumber") or acc.get("abhaNumber") or "").replace("-", ""),
-                    "preferredAbhaAddress": acc.get("preferredAbhaAddress") or acc.get("abhaAddress"),
+                    "ABHANumber": str(acc.get("ABHANumber") or acc.get("abhaNumber") or "").replace("-", ""),
+                    "ABHAAddress": acc.get("preferredAbhaAddress") or acc.get("abhaAddress") or acc.get("ABHAAddress") or "",
                     "name": acc.get("name") or patient_name,
                     "gender": acc.get("gender") or gender,
                     "dob": acc_dob,
@@ -1302,8 +1308,8 @@ async def verify_patient_abha_otp(data: dict) -> dict:
                 })
             if not normalized_accounts and abha_number:
                 normalized_accounts.append({
-                    "abhaNumber": abha_number,
-                    "preferredAbhaAddress": abha_address,
+                    "ABHANumber": abha_number,
+                    "ABHAAddress": abha_address,
                     "name": patient_name,
                     "gender": gender,
                     "dob": dob,
@@ -1319,26 +1325,30 @@ async def verify_patient_abha_otp(data: dict) -> dict:
             saved_profile_data["dob"] = dob
             saved_profile_data["ABHANumber"] = abha_number
             saved_profile_data["preferredAbhaAddress"] = abha_address
+            saved_profile_data["ABHAAddress"] = abha_address
             save_m1_profile(effective_pid, saved_profile_data)
 
             if user_token:
                 save_m1_token(effective_pid, {
                     "token": user_token,
                     "jwtToken": user_token,
-                    "abhaNumber": abha_number,
-                    "abhaAddress": abha_address,
+                    "ABHANumber": abha_number,
+                    "ABHAAddress": abha_address,
                     "txnId": txn_id,
                     "saved_at": now_iso(),
                 })
                 if txn_id in m1_otp_txns and isinstance(m1_otp_txns[txn_id], dict):
                     m1_otp_txns[txn_id]["jwtToken"] = user_token
                     m1_otp_txns[txn_id]["token"] = user_token
+                if effective_pid in m1_otp_txns and isinstance(m1_otp_txns[effective_pid], dict):
+                    m1_otp_txns[effective_pid]["jwtToken"] = user_token
+                    m1_otp_txns[effective_pid]["token"] = user_token
 
             save_m1_linked(effective_pid, {
                 "patientId": effective_pid,
                 "regNo": effective_pid,
-                "abhaNumber": abha_number,
-                "abhaAddress": abha_address,
+                "ABHANumber": abha_number,
+                "ABHAAddress": abha_address,
                 "name": patient_name,
                 "gender": gender,
                 "dob": dob,
@@ -1354,10 +1364,8 @@ async def verify_patient_abha_otp(data: dict) -> dict:
                 "token": user_token,
                 "patientId": effective_pid,
                 "regNo": effective_pid,
-                "abhaNumber": abha_number,
                 "ABHANumber": abha_number,
-                "abhaAddress": abha_address,
-                "preferredAbhaAddress": abha_address,
+                "ABHAAddress": abha_address,
                 "patientName": patient_name,
                 "name": patient_name,
                 "gender": gender,
@@ -1390,7 +1398,7 @@ async def verify_user_account(data: dict) -> dict:
     Calls ABDM: POST /abha/api/v3/profile/login/verify/user
     Body to ABDM:
       {
-         "ABHANumber": "<abha-number>",
+         "ABHANumber": "<abha-number>", // Hyphenated 14 digits XX-XXXX-XXXX-XXXX
          "txnId": "<txnId>"
       }
     Headers to ABDM:
@@ -1398,50 +1406,100 @@ async def verify_user_account(data: dict) -> dict:
       - T-token: Bearer <jwtToken>
       - REQUEST-ID: <uuid>
       - TIMESTAMP: <isoTimestamp>
+    Auto-maps txnId, T-token, and ABHANumber from active session / patientId so user/ProDoc
+    can simply call with ABHANumber and patientId.
     Returns:
       {
+         "success": True,
+         "message": "User verified successfully",
          "token": "...",
          "expiresIn": 1800,
          "refreshToken": "...",
-         "refreshExpiresIn": 1296000
+         "refreshExpiresIn": 1296000,
+         "patientId": "145",
+         "regNo": "145",
+         "ABHANumber": "91-3727-6267-7683",
+         "ABHAAddress": "thakurrohan2@sbx",
+         "txnId": "..."
       }
     """
     patient_id = str(data.get("patientId") or data.get("regNo") or "").strip()
     raw_num = str(data.get("ABHANumber") or data.get("abhaNumber") or "").strip()
+
+    # 1. Fetch cached token and profile for this patient from persistent disk cache
+    cached_entry = get_m1_token(patient_id) if patient_id else {}
+    if not cached_entry and patient_id:
+        cached_entry = _load_m1_cache().get(patient_id, {})
+    if not cached_entry and not patient_id:
+        disk_cache = _load_m1_cache()
+        if disk_cache:
+            patient_id, cached_entry = list(disk_cache.items())[-1]
+
+    # Resolve ABHANumber
+    if not raw_num and cached_entry:
+        raw_num = str(cached_entry.get("ABHANumber") or cached_entry.get("abhaNumber") or "").strip()
+
     digits = "".join(c for c in raw_num if c.isdigit())
     if len(digits) == 14:
         formatted_num = f"{digits[:2]}-{digits[2:6]}-{digits[6:10]}-{digits[10:14]}"
     else:
         formatted_num = raw_num
 
+    # 2. Resolve txnId
     txn_id = str(data.get("txnId") or data.get("transactionId") or "").strip()
-
-    # Auto-resolve txnId from active session if omitted
-    if not txn_id:
-        if patient_id and patient_id in m1_otp_txns and isinstance(m1_otp_txns[patient_id], dict):
+    if not txn_id and cached_entry:
+        txn_id = str(cached_entry.get("txnId") or "").strip()
+    if not txn_id and patient_id and patient_id in m1_otp_txns:
+        if isinstance(m1_otp_txns[patient_id], dict):
             txn_id = m1_otp_txns[patient_id].get("txnId") or ""
-        elif m1_otp_txns:
-            for t_id in reversed(list(m1_otp_txns.keys())):
-                meta = m1_otp_txns[t_id]
-                if isinstance(meta, dict) and meta.get("txnId"):
-                    txn_id = meta["txnId"]
-                    break
+    if not txn_id and m1_otp_txns:
+        for t_id in reversed(list(m1_otp_txns.keys())):
+            meta = m1_otp_txns[t_id]
+            if isinstance(meta, dict) and meta.get("txnId"):
+                txn_id = meta["txnId"]
+                break
+
+    # 3. Resolve T-token (session jwtToken returned by verify-otp)
+    t_token = str(data.get("token") or data.get("t_token") or data.get("T-token") or "").strip()
+    if not t_token and cached_entry:
+        t_token = str(cached_entry.get("jwtToken") or cached_entry.get("token") or "").strip()
+    if not t_token and txn_id and txn_id in m1_otp_txns:
+        if isinstance(m1_otp_txns[txn_id], dict):
+            t_token = m1_otp_txns[txn_id].get("jwtToken") or m1_otp_txns[txn_id].get("token") or ""
+
+    # If t_token exists, extract claims to verify txnId & ABHANumber consistency
+    claims = parse_jwt_payload(t_token) if t_token else {}
+    if not txn_id and claims.get("txnId"):
+        txn_id = str(claims["txnId"]).strip()
+    elif txn_id and claims.get("txnId") and claims["txnId"] != txn_id:
+        log.info("[PRODOC ABHA VERIFY-USER] Aligning txnId (%s) with token claims txnId (%s)", txn_id, claims["txnId"])
+        txn_id = str(claims["txnId"]).strip()
+
+    if not formatted_num and claims.get("abhaNumber"):
+        c_num = str(claims["abhaNumber"]).strip()
+        c_digits = "".join(c for c in c_num if c.isdigit())
+        if len(c_digits) == 14:
+            formatted_num = f"{c_digits[:2]}-{c_digits[2:6]}-{c_digits[6:10]}-{c_digits[10:14]}"
+        else:
+            formatted_num = c_num
+
+    # 4. Resolve ABHAAddress
+    abha_address = str(
+        data.get("ABHAAddress")
+        or (cached_entry.get("ABHAAddress") if cached_entry else "")
+        or (cached_entry.get("preferredAbhaAddress") if cached_entry else "")
+        or (cached_entry.get("abhaAddress") if cached_entry else "")
+        or claims.get("preferredAbhaAddress")
+        or ""
+    ).strip()
+
+    effective_pid = patient_id or "1"
 
     if not txn_id:
         return {
             "success": False,
             "message": "txnId is required for verify user. Please run Send/Verify OTP first.",
         }
-
-    # Resolve T-token (session jwtToken returned by verify-otp)
-    t_token = str(data.get("token") or data.get("t_token") or data.get("T-token") or "").strip()
-    if not t_token:
-        if txn_id in m1_otp_txns and isinstance(m1_otp_txns[txn_id], dict):
-            t_token = m1_otp_txns[txn_id].get("jwtToken") or m1_otp_txns[txn_id].get("token") or ""
-        if not t_token and patient_id:
-            token_entry = m1_patient_tokens.get(patient_id)
-            if token_entry and isinstance(token_entry, dict):
-                t_token = token_entry.get("jwtToken") or token_entry.get("token") or ""
 
     try:
         access_token = await get_access_token()
@@ -1469,11 +1527,12 @@ async def verify_user_account(data: dict) -> dict:
             refresh_token = res_json.get("refreshToken", "")
             refresh_expires_in = res_json.get("refreshExpiresIn", 1296000)
 
-            effective_pid = patient_id or "1"
             save_m1_token(effective_pid, {
                 "token": user_token,
                 "user_token": user_token,
-                "abhaNumber": formatted_num,
+                "jwtToken": t_token,
+                "ABHANumber": formatted_num,
+                "ABHAAddress": abha_address,
                 "txnId": txn_id,
                 "saved_at": now_iso(),
             })
@@ -1489,15 +1548,35 @@ async def verify_user_account(data: dict) -> dict:
                 "refreshToken": refresh_token,
                 "refreshExpiresIn": refresh_expires_in,
                 "patientId": effective_pid,
+                "regNo": effective_pid,
                 "ABHANumber": formatted_num,
+                "ABHAAddress": abha_address,
                 "txnId": txn_id,
             }
         else:
             err_msg, raw_err = _extract_abdm_error_details(r, "Failed to verify user account in ABDM")
             log.warning("[PRODOC ABHA VERIFY-USER] ABDM returned status %s: %s", r.status_code, raw_err)
+
+            # If user_token was already issued in an earlier verify/user call for this patient, keep session active
+            if cached_entry and cached_entry.get("user_token"):
+                existing_user_token = cached_entry["user_token"]
+                return {
+                    "success": True,
+                    "message": "User verified successfully (session active)",
+                    "token": existing_user_token,
+                    "expiresIn": 1800,
+                    "refreshToken": cached_entry.get("refreshToken", ""),
+                    "patientId": effective_pid,
+                    "regNo": effective_pid,
+                    "ABHANumber": formatted_num,
+                    "ABHAAddress": abha_address,
+                    "txnId": txn_id,
+                }
+
             return {
                 "success": False,
                 "message": err_msg,
+                "detail": "ABDM OTP transaction session expired or already used. Please Send and Verify OTP again.",
                 "abdm_status": r.status_code,
                 "abdm_raw": raw_err,
             }
@@ -1521,22 +1600,24 @@ async def get_patient_profile_details(data: dict) -> dict:
       - lastName
       - name (First + Middle + Last)
       - yearOfBirth, monthOfBirth, dayOfBirth, dob, gender
+      - ABHANumber, ABHAAddress
     And supports optional grid comparison against hospital enteredData.
     """
     patient_id = str(data.get("patientId") or data.get("regNo") or "").strip()
     user_token = str(data.get("token") or data.get("X-token") or data.get("x_token") or "").strip()
 
-    # If user_token not supplied in body, auto-resolve from cache
-    if not user_token:
-        if patient_id and patient_id in m1_patient_tokens:
-            entry = m1_patient_tokens[patient_id]
-            if isinstance(entry, dict):
+    # If user_token not supplied in body, auto-resolve from persistent disk cache
+    cached_entry = get_m1_token(patient_id) if patient_id else {}
+    if not user_token and cached_entry:
+        user_token = cached_entry.get("user_token") or cached_entry.get("token") or ""
+
+    if not user_token and m1_patient_tokens:
+        for pid, entry in reversed(list(m1_patient_tokens.items())):
+            if isinstance(entry, dict) and entry.get("token"):
                 user_token = entry.get("user_token") or entry.get("token") or ""
-        if not user_token and m1_patient_tokens:
-            for pid, entry in reversed(list(m1_patient_tokens.items())):
-                if isinstance(entry, dict) and entry.get("token"):
-                    user_token = entry.get("user_token") or entry.get("token") or ""
-                    break
+                if not patient_id:
+                    patient_id = pid
+                break
 
     raw_profile = {}
     if user_token:
@@ -1602,8 +1683,22 @@ async def get_patient_profile_details(data: dict) -> dict:
 
     gender = str(raw_profile.get("gender") or "").strip()
     mobile = str(raw_profile.get("mobile") or "").strip()
-    abha_num = str(raw_profile.get("ABHANumber") or raw_profile.get("abhaNumber") or "").strip()
-    abha_addr = str(raw_profile.get("preferredAbhaAddress") or raw_profile.get("abhaAddress") or "").strip()
+    abha_num = str(
+        raw_profile.get("ABHANumber")
+        or raw_profile.get("abhaNumber")
+        or (cached_entry.get("ABHANumber") if cached_entry else "")
+        or ""
+    ).replace("-", "").strip()
+
+    abha_addr = str(
+        raw_profile.get("ABHAAddress")
+        or raw_profile.get("preferredAbhaAddress")
+        or raw_profile.get("abhaAddress")
+        or (cached_entry.get("ABHAAddress") if cached_entry else "")
+        or (cached_entry.get("preferredAbhaAddress") if cached_entry else "")
+        or ""
+    ).strip()
+
     address = str(raw_profile.get("address") or "").strip()
     pincode = str(raw_profile.get("pincode") or "").strip()
     state_name = str(raw_profile.get("stateName") or "").strip()
@@ -1626,6 +1721,7 @@ async def get_patient_profile_details(data: dict) -> dict:
         "dayOfBirth": day_ob,
         "mobile": mobile,
         "ABHANumber": abha_num,
+        "ABHAAddress": abha_addr,
         "preferredAbhaAddress": abha_addr,
         "address": address,
         "pincode": pincode,
@@ -1638,8 +1734,8 @@ async def get_patient_profile_details(data: dict) -> dict:
     save_m1_linked(effective_pid, {
         "patientId": effective_pid,
         "regNo": effective_pid,
-        "abhaNumber": abha_num,
-        "abhaAddress": abha_addr,
+        "ABHANumber": abha_num,
+        "ABHAAddress": abha_addr,
         "firstName": first_name,
         "middleName": middle_name,
         "lastName": last_name,
@@ -1691,9 +1787,7 @@ async def get_patient_profile_details(data: dict) -> dict:
         "gender": gender,
         "mobile": mobile,
         "ABHANumber": abha_num,
-        "abhaNumber": abha_num,
-        "preferredAbhaAddress": abha_addr,
-        "abhaAddress": abha_addr,
+        "ABHAAddress": abha_addr,
         "address": address,
         "pincode": pincode,
         "districtName": district_name,
@@ -1717,8 +1811,8 @@ async def register_patient_abha_link(data: dict) -> dict:
     Persists linking to disk cache and updates patient profile.
     """
     reg_no = str(data.get("regNo") or data.get("patientId") or "").strip()
-    abha_number = str(data.get("abhaNumber") or data.get("ABHANumber") or "").replace("-", "").strip()
-    abha_address = str(data.get("abhaAddress") or data.get("ABHAAddress") or "").strip()
+    abha_number = str(data.get("ABHANumber") or data.get("abhaNumber") or "").replace("-", "").strip()
+    abha_address = str(data.get("ABHAAddress") or data.get("abhaAddress") or "").strip()
 
     if not reg_no:
         return {"success": False, "message": "Patient Reg. No. is required"}
@@ -1741,8 +1835,8 @@ async def register_patient_abha_link(data: dict) -> dict:
     linked_data = {
         "patientId": reg_no,
         "regNo": reg_no,
-        "abhaNumber": abha_number,
-        "abhaAddress": abha_address,
+        "ABHANumber": abha_number,
+        "ABHAAddress": abha_address,
         "firstName": first_name,
         "middleName": middle_name,
         "lastName": last_name,
@@ -1758,6 +1852,7 @@ async def register_patient_abha_link(data: dict) -> dict:
 
     if existing_prof:
         existing_prof["ABHANumber"] = abha_number
+        existing_prof["ABHAAddress"] = abha_address
         existing_prof["preferredAbhaAddress"] = abha_address
         if first_name:
             existing_prof["firstName"] = first_name
@@ -1777,8 +1872,8 @@ async def register_patient_abha_link(data: dict) -> dict:
         "message": f"ABHA details successfully registered for patient {reg_no}",
         "patientId": reg_no,
         "regNo": reg_no,
-        "abhaNumber": abha_number,
-        "abhaAddress": abha_address,
+        "ABHANumber": abha_number,
+        "ABHAAddress": abha_address,
         "firstName": first_name,
         "middleName": middle_name,
         "lastName": last_name,

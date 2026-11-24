@@ -147,15 +147,19 @@ def save_m1_token(patient_id: str, data: Any, abha_number: str = "", abha_addres
     if isinstance(data, str):
         data = {
             "token": data,
+            "ABHANumber": abha_number,
+            "ABHAAddress": abha_address,
             "abhaNumber": abha_number,
             "abhaAddress": abha_address,
             "saved_at": now_iso(),
         }
     elif isinstance(data, dict):
-        if abha_number and "abhaNumber" not in data:
-            data["abhaNumber"] = abha_number
-        if abha_address and "abhaAddress" not in data:
-            data["abhaAddress"] = abha_address
+        if abha_number:
+            data.setdefault("ABHANumber", abha_number)
+            data.setdefault("abhaNumber", abha_number)
+        if abha_address:
+            data.setdefault("ABHAAddress", abha_address)
+            data.setdefault("abhaAddress", abha_address)
     m1_patient_tokens[patient_id] = data
     try:
         current = _load_m1_cache()
@@ -163,6 +167,14 @@ def save_m1_token(patient_id: str, data: Any, abha_number: str = "", abha_addres
         M1_CACHE_FILE.write_text(json.dumps(current, indent=2), encoding="utf-8")
     except Exception as e:
         log.warning("Could not persist M1 token: %s", e)
+
+def get_m1_token(patient_id: str) -> dict:
+    """Retrieve M1 token data for patient from disk cache or memory."""
+    disk = _load_m1_cache()
+    if patient_id in disk:
+        m1_patient_tokens[patient_id] = disk[patient_id]
+        return disk[patient_id]
+    return m1_patient_tokens.get(patient_id, {})
 
 def mask_abha_number(val: str | None) -> str:
     """Mask 14-digit ABHA number as XX-XXXX-XXXX-XXXX."""
