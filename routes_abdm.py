@@ -592,10 +592,12 @@ async def prodoc_verify_user(req: ProDocVerifyUserRequest):
     return await abha_service.verify_user_account(req.model_dump())
 
 
+@router.post("/api/abdm/register-patient/get-abha-profile", tags=["ProDoc OPD ABHA"])
+@router.post("/api/abdm/register-patient/select-account", tags=["ProDoc OPD ABHA"])
+@router.post("/api/abdm/register-patient/profile-details", tags=["ProDoc OPD ABHA"])
 @router.get("/api/abdm/register-patient/profile-details", tags=["ProDoc OPD ABHA"])
 @router.get("/api/abdm/profile/account", tags=["ProDoc OPD ABHA"])
 @router.get("/api/abdm/register-patient/get-profile", tags=["ProDoc OPD ABHA"])
-@router.post("/api/abdm/register-patient/profile-details", tags=["ProDoc OPD ABHA"])
 @router.post("/api/abdm/profile/account", tags=["ProDoc OPD ABHA"])
 @router.post("/api/abdm/register-patient/get-profile", tags=["ProDoc OPD ABHA"])
 @router.post("/api/abdm/patients/abha-profile-details", tags=["ProDoc OPD ABHA"])
@@ -607,15 +609,11 @@ async def prodoc_get_profile_details(
     authorization: str | None = Header(None),
 ):
     """
-    Step 4: Retrieves full profile details directly from ABDM account.
-    Calls ABDM: GET /abha/api/v3/profile/account with X-token header.
-    NO BODY REQUIRED!
-    X-token can be passed in Header 'X-token: Bearer <token>', or auto-resolved from active session / patientId.
-    Returns:
-      - ABHANumber, ABHAAddress
-      - firstName, middleName, lastName, name
-      - dob, yearOfBirth, monthOfBirth, dayOfBirth
-      - gender, mobile, address, pincode, stateName, districtName, townName, profilePhoto, status
+    Called by VB.NET btnSelectABHAAccount_Click -> GetABHAProfile():
+    Performs BOTH ABDM calls internally:
+      1. Verify User API (POST /profile/login/verify/user) -> receives X-Token
+      2. Get Profile Details API (GET /profile/account) -> receives full profile
+    Returns First Name, Middle Name, Last Name, DOB, Gender, ABHANumber, ABHAAddress in ONE response to VB.NET.
     """
     body_data = {}
     if request.method == "POST":
@@ -642,7 +640,7 @@ async def prodoc_get_profile_details(
     if patientId:
         data.setdefault("patientId", patientId)
 
-    return await abha_service.get_patient_profile_details(data)
+    return await abha_service.select_account_get_profile(data)
 
 
 @router.post("/api/abdm/register-patient/link", tags=["ProDoc OPD ABHA"])

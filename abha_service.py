@@ -1623,8 +1623,7 @@ async def verify_user_account(data: dict) -> dict:
 
 async def get_patient_profile_details(data: dict) -> dict:
     """
-    Step 2: Fetches full profile details from ABDM and extracts separated Name breakdown.
-    Method: POST (as required for ProDoc / Postman)
+    Fetches full profile details from ABDM and extracts separated Name breakdown.
     Calls ABDM: GET /abha/api/v3/profile/account
     Header: X-token: Bearer <user_token>
     Returns clean separated name fields:
@@ -1634,7 +1633,6 @@ async def get_patient_profile_details(data: dict) -> dict:
       - name (First + Middle + Last)
       - yearOfBirth, monthOfBirth, dayOfBirth, dob, gender
       - ABHANumber, ABHAAddress
-    And supports optional grid comparison against hospital enteredData.
     """
     patient_id = str(data.get("patientId") or data.get("regNo") or "").strip()
     user_token = str(data.get("token") or data.get("X-token") or data.get("x_token") or "").strip()
@@ -1835,6 +1833,36 @@ async def get_patient_profile_details(data: dict) -> dict:
         response_data["comparison"] = comparison
 
     return response_data
+
+
+async def select_account_get_profile(data: dict) -> dict:
+    """
+    Combined 2-in-1 endpoint called by VB.NET GetABHAProfile():
+    1. Internally calls ABDM Verify User API (POST /abha/api/v3/profile/login/verify/user)
+       with ABHANumber & txnId to receive authentication token (X-Token).
+    2. Internally calls ABDM Get Profile Details API (GET /abha/api/v3/profile/account)
+       passing X-token in header to retrieve First Name, Middle Name, Last Name, DOB, Gender, etc.
+    3. Returns full profile details to VB.NET in ONE response.
+    """
+    # Step 1: Verify User with ABDM
+    verify_res = await verify_user_account(data)
+    user_token = verify_res.get("token") or ""
+
+    # Step 2: Get Profile Details using the token
+    prof_data = dict(data)
+    if user_token:
+        prof_data["token"] = user_token
+    if verify_res.get("patientId"):
+        prof_data["patientId"] = verify_res["patientId"]
+    if verify_res.get("ABHANumber"):
+        prof_data["ABHANumber"] = verify_res["ABHANumber"]
+    if verify_res.get("ABHAAddress"):
+        prof_data["ABHAAddress"] = verify_res["ABHAAddress"]
+
+    res = await get_patient_profile_details(prof_data)
+    if not res.get("token") and user_token:
+        res["token"] = user_token
+    return res
 
 
 async def register_patient_abha_link(data: dict) -> dict:
