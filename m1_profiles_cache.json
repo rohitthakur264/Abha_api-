@@ -92,10 +92,10 @@
     "subdistrictName": "MUMBAI SUBURBAN",
     "townName": "Mumbai",
     "authMethods": [
-      "AADHAAR_BIO",
-      "MOBILE_OTP",
       "AADHAAR_OTP",
-      "DEMOGRAPHICS"
+      "AADHAAR_BIO",
+      "DEMOGRAPHICS",
+      "MOBILE_OTP"
     ],
     "tags": {},
     "kycVerified": true,
